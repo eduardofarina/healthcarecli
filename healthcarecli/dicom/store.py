@@ -6,9 +6,9 @@ Also exposes a minimal C-STORE SCP (listener) for receiving files.
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 
 import pydicom
 from pydicom import Dataset
@@ -17,8 +17,8 @@ from pynetdicom.sop_class import Verification
 
 from healthcarecli.dicom.connections import AEProfile
 
-
 # ── C-STORE SCU ──────────────────────────────────────────────────────────────
+
 
 @dataclass
 class StoreResult:
@@ -114,6 +114,7 @@ def _collect_files(paths: list[Path]) -> list[Path]:
 
 
 # ── C-STORE SCP (listener) ───────────────────────────────────────────────────
+
 
 @dataclass
 class SCPServer:

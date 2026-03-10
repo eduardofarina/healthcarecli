@@ -13,6 +13,8 @@ dependencies = [
     "pynetdicom>=2.1",
     "pydicom>=2.4",
     "platformdirs>=4.0",
+    "dicomweb-client>=0.60",
+    "requests>=2.31",
 ]
 
 [project.optional-dependencies]

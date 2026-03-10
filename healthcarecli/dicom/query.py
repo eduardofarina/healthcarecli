@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any
 
 from pydicom import Dataset
-from pynetdicom import AE, debug_logger
+from pynetdicom import AE
 from pynetdicom.sop_class import (
     PatientRootQueryRetrieveInformationModelFind,
     StudyRootQueryRetrieveInformationModelFind,
@@ -56,23 +57,41 @@ class QueryParams:
         # Always-requested return fields per level
         _RETURN_TAGS: dict[str, list[str]] = {
             "PATIENT": [
-                "PatientID", "PatientName", "PatientBirthDate", "PatientSex",
+                "PatientID",
+                "PatientName",
+                "PatientBirthDate",
+                "PatientSex",
                 "NumberOfPatientRelatedStudies",
             ],
             "STUDY": [
-                "PatientID", "PatientName", "PatientBirthDate",
-                "StudyInstanceUID", "StudyDate", "StudyTime", "StudyDescription",
-                "AccessionNumber", "ModalitiesInStudy", "NumberOfStudyRelatedSeries",
+                "PatientID",
+                "PatientName",
+                "PatientBirthDate",
+                "StudyInstanceUID",
+                "StudyDate",
+                "StudyTime",
+                "StudyDescription",
+                "AccessionNumber",
+                "ModalitiesInStudy",
+                "NumberOfStudyRelatedSeries",
                 "NumberOfStudyRelatedInstances",
             ],
             "SERIES": [
-                "StudyInstanceUID", "SeriesInstanceUID", "SeriesDate",
-                "SeriesTime", "SeriesDescription", "Modality", "SeriesNumber",
+                "StudyInstanceUID",
+                "SeriesInstanceUID",
+                "SeriesDate",
+                "SeriesTime",
+                "SeriesDescription",
+                "Modality",
+                "SeriesNumber",
                 "NumberOfSeriesRelatedInstances",
             ],
             "IMAGE": [
-                "StudyInstanceUID", "SeriesInstanceUID", "SOPInstanceUID",
-                "InstanceNumber", "SOPClassUID",
+                "StudyInstanceUID",
+                "SeriesInstanceUID",
+                "SOPInstanceUID",
+                "InstanceNumber",
+                "SOPClassUID",
             ],
         }
         for tag in _RETURN_TAGS.get(self.query_level, []):
@@ -110,7 +129,7 @@ class QueryResult:
     data: dict[str, Any]
 
     @classmethod
-    def from_dataset(cls, ds: Dataset) -> "QueryResult":
+    def from_dataset(cls, ds: Dataset) -> QueryResult:
         data: dict[str, Any] = {}
         for elem in ds:
             if elem.keyword:
@@ -173,9 +192,7 @@ def cfind(
 
             category = code_to_category(status.Status)
             if category == "Failure":
-                raise DicomQueryError(
-                    f"C-FIND failed — status 0x{status.Status:04X}"
-                )
+                raise DicomQueryError(f"C-FIND failed — status 0x{status.Status:04X}")
             if category == "Pending" and dataset is not None:
                 yield QueryResult.from_dataset(dataset)
             # "Success" (0x0000) is the final empty response — stop iteration

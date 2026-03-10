@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
@@ -15,12 +14,14 @@ console = Console()
 
 def run_init() -> None:
     """Interactive first-run setup wizard."""
-    console.print(Panel(
-        "[bold]healthcarecli[/bold] — Healthcare Interoperability CLI\n"
-        "This wizard will help you configure your first connection.",
-        title="Setup",
-        border_style="blue",
-    ))
+    console.print(
+        Panel(
+            "[bold]healthcarecli[/bold] — Healthcare Interoperability CLI\n"
+            "This wizard will help you configure your first connection.",
+            title="Setup",
+            border_style="blue",
+        )
+    )
 
     cfg = config_dir()
     console.print(f"\nConfig directory: [cyan]{cfg}[/cyan]")
@@ -44,8 +45,11 @@ def _setup_dicom() -> None:
     calling_ae = Prompt.ask("  Our AE title (calling)", default="HEALTHCARECLI")
 
     profile = AEProfile(
-        name=name, host=host, port=port,
-        ae_title=ae_title, calling_ae=calling_ae,
+        name=name,
+        host=host,
+        port=port,
+        ae_title=ae_title,
+        calling_ae=calling_ae,
     )
     profile.save()
     console.print(f"  [green]Profile '{name}' saved.[/green]")

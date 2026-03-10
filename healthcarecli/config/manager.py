@@ -37,6 +37,7 @@ def _save_all(data: dict[str, Any]) -> None:
 
 # ── Section-scoped helpers used by each module ───────────────────────────────
 
+
 def list_profiles(section: str) -> dict[str, Any]:
     return _load_all().get(section, {})
 

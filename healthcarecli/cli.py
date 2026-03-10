@@ -17,4 +17,5 @@ app.add_typer(dicom_cli.app, name="dicom")
 def init() -> None:
     """Guided setup wizard — configure your first PACS/FHIR/HL7 connection."""
     from healthcarecli.init_cmd import run_init
+
     run_init()

@@ -34,17 +34,15 @@ class AEProfile:
         save_profile(SECTION, self.name, data)
 
     @classmethod
-    def load(cls, name: str) -> "AEProfile":
+    def load(cls, name: str) -> AEProfile:
         data = get_profile(SECTION, name)
         if data is None:
             raise ProfileNotFoundError(name)
         return cls(name=name, **data)
 
     @classmethod
-    def list_all(cls) -> list["AEProfile"]:
-        return [
-            cls(name=n, **v) for n, v in list_profiles(SECTION).items()
-        ]
+    def list_all(cls) -> list[AEProfile]:
+        return [cls(name=n, **v) for n, v in list_profiles(SECTION).items()]
 
     def delete(self) -> None:
         if not delete_profile(SECTION, self.name):
@@ -57,10 +55,7 @@ class AEProfile:
 
     def __str__(self) -> str:  # pragma: no cover
         tls_flag = " [TLS]" if self.tls else ""
-        return (
-            f"{self.name}: {self.calling_ae} → {self.ae_title}@"
-            f"{self.host}:{self.port}{tls_flag}"
-        )
+        return f"{self.name}: {self.calling_ae} → {self.ae_title}@{self.host}:{self.port}{tls_flag}"
 
 
 class ProfileNotFoundError(KeyError):
