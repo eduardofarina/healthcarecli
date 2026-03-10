@@ -134,6 +134,95 @@ healthcarecli dicom listen --port 11112 --output-dir ./received
 
 ---
 
+## DICOMweb commands (QIDO-RS / WADO-RS / STOW-RS)
+
+For PACS that expose a DICOMweb endpoint (Orthanc, DCM4CHEE, Google Cloud Healthcare, AWS HealthImaging, etc.).
+
+```
+healthcarecli dicom web --help
+
+Commands:
+  profile  Manage DICOMweb server profiles (add, list, show, delete)
+  qido     Search studies/series/instances via QIDO-RS
+  wado     Download DICOM instances via WADO-RS
+  stow     Upload DICOM files via STOW-RS
+```
+
+### DICOMweb profiles
+
+```bash
+# Plain (no auth)
+healthcarecli dicom web profile add orthanc-web \
+  --url http://localhost:8042/dicom-web
+
+# Basic auth
+healthcarecli dicom web profile add dcm4chee \
+  --url http://dcm4chee:8080/dcm4chee-arc/aets/DCM4CHEE/rs \
+  --auth basic --username admin --password secret
+
+# Bearer token (Google Cloud Healthcare, AWS, etc.)
+healthcarecli dicom web profile add gcp \
+  --url https://healthcare.googleapis.com/v1/projects/P/datasets/D/dicomStores/S/dicomWeb \
+  --auth bearer --token $(gcloud auth print-access-token)
+
+# Separate QIDO / WADO / STOW prefixes (some DCM4CHEE configs)
+healthcarecli dicom web profile add dcm4chee-split \
+  --url http://dcm4chee:8080 \
+  --qido-prefix /dcm4chee-arc/aets/DCM4CHEE/rs \
+  --wado-prefix /dcm4chee-arc/aets/DCM4CHEE/rs \
+  --stow-prefix /dcm4chee-arc/aets/DCM4CHEE/rs
+```
+
+### QIDO-RS (search)
+
+```bash
+# All studies for a patient
+healthcarecli dicom web qido --profile orthanc-web --patient-id 12345
+
+# CT studies in a date range
+healthcarecli dicom web qido --profile orthanc-web \
+  --study-date 20240101-20241231 --modality CT --output json
+
+# Series within a study
+healthcarecli dicom web qido --profile orthanc-web \
+  --level series --study-uid 1.2.3.4 --output json
+
+# Instances within a series
+healthcarecli dicom web qido --profile orthanc-web \
+  --level instances --study-uid 1.2.3.4 --series-uid 1.2.3.4.5 --output json
+
+# Arbitrary tag filter
+healthcarecli dicom web qido --profile orthanc-web \
+  --level studies --filter "00080060=CT" --limit 20
+```
+
+### WADO-RS (download)
+
+```bash
+# Download entire study
+healthcarecli dicom web wado --profile orthanc-web \
+  --study-uid 1.2.3.4 --output-dir ./study/
+
+# Download one series
+healthcarecli dicom web wado --profile orthanc-web \
+  --study-uid 1.2.3.4 --series-uid 1.2.3.4.5 --output-dir ./series/
+
+# Download single instance
+healthcarecli dicom web wado --profile orthanc-web \
+  --study-uid 1.2.3.4 --series-uid 1.2.3.4.5 --instance-uid 1.2.3.4.5.6 \
+  --output-dir ./
+```
+
+### STOW-RS (upload)
+
+```bash
+# Upload files or a directory
+healthcarecli dicom web stow --profile orthanc-web /path/to/study/
+healthcarecli dicom web stow --profile orthanc-web image.dcm --output json
+```
+
+---
+
 ## For AI agents
 
 Every command supports `--output json` for machine-readable output.
@@ -161,5 +250,8 @@ healthcarecli --install-completion   # bash, zsh, fish, PowerShell
 ## Roadmap
 
 - [x] DICOM — C-FIND, C-STORE SCU/SCP, C-ECHO, AE profiles
+- [x] DICOMweb — QIDO-RS, WADO-RS, STOW-RS (REST, auth: none/basic/bearer)
+- [x] npm distribution (`npm install -g healthcarecli`)
+- [x] CI — GitHub Actions (Ubuntu, Windows, macOS × Python 3.10–3.12)
 - [ ] FHIR R4 — patient search, resource CRUD, SMART on FHIR auth
 - [ ] HL7 v2 — MLLP send/receive, ADT/ORM/ORU message builders

@@ -16,10 +16,12 @@ from healthcarecli.dicom.connections import AEProfile, ProfileNotFoundError
 from healthcarecli.dicom.echo import DicomEchoError, cecho
 from healthcarecli.dicom.query import DicomQueryError, QueryParams, cfind
 from healthcarecli.dicom.store import DicomStoreError, SCPServer, StoreResult, csend
+from healthcarecli.dicom.web_cli import web_app
 
-app = typer.Typer(help="DICOM operations — profiles, C-FIND, C-STORE.")
+app = typer.Typer(help="DICOM operations — profiles, C-FIND, C-STORE, DICOMweb.")
 profile_app = typer.Typer(help="Manage DICOM AE connection profiles.")
 app.add_typer(profile_app, name="profile")
+app.add_typer(web_app, name="web")
 
 console = Console(stderr=True)  # status/errors → stderr; data → stdout
 

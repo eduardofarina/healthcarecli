@@ -92,6 +92,65 @@ healthcarecli dicom listen --port 11112 --output-dir ./received
 
 ---
 
+## DICOMweb — QIDO-RS / WADO-RS / STOW-RS
+
+Use when the PACS exposes a DICOMweb (REST) endpoint instead of (or in addition to) traditional DICOM network.
+
+### Save a DICOMweb profile (run once)
+```bash
+healthcarecli dicom web profile add <name> --url <base-url>
+# With auth:
+healthcarecli dicom web profile add gcp --url https://... --auth bearer --token <token>
+healthcarecli dicom web profile add local --url http://localhost:8042/dicom-web --auth basic --username admin --password secret
+```
+
+### QIDO-RS — search
+```bash
+# Studies
+healthcarecli dicom web qido --profile <name> --level studies --patient-id <id> --output json
+
+# Series within a study
+healthcarecli dicom web qido --profile <name> --level series --study-uid <uid> --output json
+
+# Instances within a series
+healthcarecli dicom web qido --profile <name> --level instances --study-uid <uid> --series-uid <uid> --output json
+
+# Extra tag filter
+healthcarecli dicom web qido --profile <name> --filter "00080060=CT" --limit 20 --output json
+```
+
+Output is a JSON array with DICOM keyword keys (e.g. `PatientID`, `StudyInstanceUID`, `Modality`).
+
+### WADO-RS — download
+```bash
+# Entire study → saves .dcm files to output-dir
+healthcarecli dicom web wado --profile <name> --study-uid <uid> --output-dir ./study/ --output json
+
+# Specific series
+healthcarecli dicom web wado --profile <name> --study-uid <uid> --series-uid <uid> --output-dir ./
+
+# Single instance
+healthcarecli dicom web wado --profile <name> --study-uid <uid> --series-uid <uid> --instance-uid <uid> --output-dir ./
+```
+
+Output JSON: `{"downloaded": N, "files": [{"file": "/path/to/uid.dcm"}, ...]}`
+
+### STOW-RS — upload
+```bash
+healthcarecli dicom web stow --profile <name> /path/to/study/ --output json
+healthcarecli dicom web stow --profile <name> file.dcm
+```
+
+Output JSON: `{"stored": N, "failed": M, "files": [{"file": "...", "success": true}, ...]}`
+
+### Tips for agents (DICOMweb)
+- QIDO → WADO is the standard retrieve flow: search first to get UIDs, then download.
+- `--output json` on `qido` returns an array — use `StudyInstanceUID` from results to drive `wado`.
+- STOW-RS and WADO-RS both use separate profile types from the DICOM network profile (`dicom profile` vs `dicom web profile`).
+- Some PACS (e.g. Orthanc) expose DICOMweb at `/dicom-web`; others (DCM4CHEE) use `/dcm4chee-arc/aets/<AET>/rs`.
+
+---
+
 ## Setup
 
 Install (once):
