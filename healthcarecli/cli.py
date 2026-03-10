@@ -11,3 +11,10 @@ app = typer.Typer(
 )
 
 app.add_typer(dicom_cli.app, name="dicom")
+
+
+@app.command("init")
+def init() -> None:
+    """Guided setup wizard — configure your first PACS/FHIR/HL7 connection."""
+    from healthcarecli.init_cmd import run_init
+    run_init()

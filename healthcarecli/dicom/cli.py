@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from healthcarecli.dicom.connections import AEProfile, ProfileNotFoundError
+from healthcarecli.dicom.echo import DicomEchoError, cecho
 from healthcarecli.dicom.query import DicomQueryError, QueryParams, cfind
 from healthcarecli.dicom.store import DicomStoreError, SCPServer, StoreResult, csend
 
@@ -87,6 +88,40 @@ def profile_show(name: str = typer.Argument(...)) -> None:
     except ProfileNotFoundError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1)
+
+
+# ── C-ECHO (ping) ────────────────────────────────────────────────────────────
+
+@app.command("ping")
+def ping(
+    profile_name: str = typer.Option(..., "--profile", "-p", help="AE profile name"),
+    output: str = typer.Option("text", "--output", "-o", help="Output format: text|json"),
+) -> None:
+    """Verify a PACS connection with C-ECHO."""
+    try:
+        ae = AEProfile.load(profile_name)
+    except ProfileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+
+    try:
+        elapsed = cecho(ae)
+    except DicomEchoError as exc:
+        if output == "json":
+            print_json(json.dumps({"profile": profile_name, "success": False, "error": str(exc)}))
+        else:
+            console.print(f"[red]FAIL[/red] {ae.ae_title}@{ae.host}:{ae.port} - {exc}")
+        raise typer.Exit(1)
+
+    ms = round(elapsed * 1000, 1)
+    if output == "json":
+        print_json(json.dumps({
+            "profile": profile_name, "success": True,
+            "host": ae.host, "port": ae.port, "ae_title": ae.ae_title,
+            "rtt_ms": ms,
+        }))
+    else:
+        console.print(f"[green]OK[/green] {ae.ae_title}@{ae.host}:{ae.port} - {ms} ms")
 
 
 # ── C-FIND ────────────────────────────────────────────────────────────────────

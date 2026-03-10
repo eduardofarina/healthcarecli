@@ -1,0 +1,22 @@
+{
+  "name": "healthcarecli",
+  "version": "0.1.0",
+  "description": "Cross-platform CLI for healthcare interoperability — DICOM, FHIR, HL7",
+  "keywords": ["healthcare", "dicom", "fhir", "hl7", "pacs", "cli", "agents"],
+  "homepage": "https://github.com/eduardofarina/healthcarecli",
+  "bugs": "https://github.com/eduardofarina/healthcarecli/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eduardofarina/healthcarecli.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "healthcarecli": "./bin/healthcarecli.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
