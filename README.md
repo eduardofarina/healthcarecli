@@ -11,16 +11,18 @@ healthcarecli dicom query --profile orthanc --patient-id 12345 --output json
 
 ## Install
 
-### Recommended (isolated, no virtual env needed)
-
 ```bash
-pipx install healthcarecli
+npm install -g healthcarecli
 ```
 
-### With pip
+> Requires Node.js >=18 and Python >=3.10.
+> The npm postinstall step automatically runs `pip install healthcarecli`.
+
+### Alternative (Python-only, no Node.js needed)
 
 ```bash
-pip install healthcarecli
+pipx install healthcarecli   # recommended Python-only install
+pip install healthcarecli    # or plain pip
 ```
 
 ### From source (development)
@@ -30,8 +32,6 @@ git clone https://github.com/eduardofarina/healthcarecli
 cd healthcarecli
 pip install -e ".[dev]"
 ```
-
-> Requires Python 3.10+. On Windows, macOS, and Linux.
 
 ---
 

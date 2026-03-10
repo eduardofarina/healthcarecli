@@ -3,7 +3,8 @@
 Use the `healthcarecli` command-line tool to interact with healthcare systems:
 DICOM imaging networks (PACS), FHIR servers, and HL7 messaging endpoints.
 
-Install once with `pipx install healthcarecli` (or `pip install healthcarecli`).
+Install once with `npm install -g healthcarecli` (requires Node >=18 and Python >=3.10).
+Alternative: `pipx install healthcarecli` (Python-only, no Node required).
 Every command supports `--output json` for structured output.
 
 ---
@@ -92,6 +93,12 @@ healthcarecli dicom listen --port 11112 --output-dir ./received
 ---
 
 ## Setup
+
+Install (once):
+
+```bash
+npm install -g healthcarecli
+```
 
 First run the guided wizard (saves a profile and optionally tests the connection):
 
