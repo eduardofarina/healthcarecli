@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pydicom
 from pydicom import Dataset
-from pynetdicom import AE, AllStoragePresentationContexts, evt
+from pynetdicom import AE, evt
 from pynetdicom.sop_class import Verification
 
 from healthcarecli.dicom.connections import AEProfile
@@ -56,9 +56,18 @@ def csend(
         return []
 
     ae = AE(ae_title=profile.calling_ae)
-    # Request every storage SOP class so we can send any modality
-    for context in AllStoragePresentationContexts:
-        ae.add_requested_context(context)
+    # Request only the SOP classes actually present in the files (DICOM limits
+    # associations to 128 presentation contexts).
+    seen_sop_classes: set[str] = set()
+    for fpath in files:
+        try:
+            ds = pydicom.dcmread(str(fpath), stop_before_pixels=True)
+            if hasattr(ds, "SOPClassUID"):
+                seen_sop_classes.add(str(ds.SOPClassUID))
+        except Exception:
+            pass
+    for sop_class in seen_sop_classes:
+        ae.add_requested_context(sop_class)
 
     assoc = ae.associate(
         profile.host,
