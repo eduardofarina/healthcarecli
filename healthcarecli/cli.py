@@ -1,0 +1,13 @@
+"""Root CLI entry point."""
+
+import typer
+
+from healthcarecli.dicom import cli as dicom_cli
+
+app = typer.Typer(
+    name="healthcarecli",
+    help="Cross-platform CLI for healthcare interoperability — DICOM, FHIR, HL7.",
+    no_args_is_help=True,
+)
+
+app.add_typer(dicom_cli.app, name="dicom")
