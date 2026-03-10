@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -15,19 +14,19 @@ from healthcarecli.dicom.web import (
     DICOMWebError,
     DICOMWebProfile,
     DICOMWebProfileNotFoundError,
-    StowResult,
     _normalise_qido,
     qido_search,
     stow_store,
     wado_retrieve,
 )
 
-
 # ── fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 def isolated_config(tmp_path, monkeypatch):
     import healthcarecli.config.manager as mgr
+
     monkeypatch.setattr(mgr, "config_dir", lambda: tmp_path)
 
 
@@ -51,6 +50,7 @@ def _write_minimal_dcm(path: Path) -> Path:
 
 
 # ── Profile CRUD ──────────────────────────────────────────────────────────────
+
 
 def test_profile_save_and_load():
     p = _make_profile(name="orthanc", url="http://orthanc:8042/dicom-web")
@@ -94,6 +94,7 @@ def test_profile_with_bearer_token_builds_session():
 
 # ── _normalise_qido ───────────────────────────────────────────────────────────
 
+
 def test_normalise_qido_scalar():
     raw = [{"00100020": {"vr": "LO", "Value": ["P001"]}}]
     result = _normalise_qido(raw)
@@ -127,6 +128,7 @@ def test_normalise_qido_unknown_tag():
 
 # ── QIDO-RS ───────────────────────────────────────────────────────────────────
 
+
 def _mock_client(search_return=None):
     client = MagicMock()
     client.search_for_studies.return_value = search_return or []
@@ -137,8 +139,9 @@ def _mock_client(search_return=None):
 
 @patch("healthcarecli.dicom.web.DICOMwebClient")
 def test_qido_search_studies(mock_cls):
-    raw = [{"00100020": {"vr": "LO", "Value": ["P001"]},
-            "0020000D": {"vr": "UI", "Value": ["1.2.3"]}}]
+    raw = [
+        {"00100020": {"vr": "LO", "Value": ["P001"]}, "0020000D": {"vr": "UI", "Value": ["1.2.3"]}}
+    ]
     mock_cls.return_value = _mock_client(raw)
 
     results = qido_search(_make_profile(), level="studies", filters={"PatientID": "P001"})
@@ -157,8 +160,9 @@ def test_qido_search_series(mock_cls):
 @patch("healthcarecli.dicom.web.DICOMwebClient")
 def test_qido_search_instances(mock_cls):
     mock_cls.return_value = _mock_client([{"00080018": {"vr": "UI", "Value": ["1.2.3.4"]}}])
-    results = qido_search(_make_profile(), level="instances",
-                          study_uid="1.2.3", series_uid="1.2.3.4")
+    results = qido_search(
+        _make_profile(), level="instances", study_uid="1.2.3", series_uid="1.2.3.4"
+    )
     assert len(results) == 1
 
 
@@ -181,9 +185,11 @@ def test_qido_http_error_raises_dicomweb_error(mock_cls):
 
 # ── WADO-RS ───────────────────────────────────────────────────────────────────
 
+
 def _make_dataset(sop_uid: str = "1.2.3.4.5") -> pydicom.Dataset:
     """Return a minimal FileDataset (with file_meta) for WADO mock responses."""
     from pydicom.dataset import FileDataset, FileMetaDataset
+
     file_meta = FileMetaDataset()
     file_meta.MediaStorageSOPClassUID = "1.2.840.10008.5.1.4.1.1.2"
     file_meta.MediaStorageSOPInstanceUID = sop_uid
@@ -214,8 +220,9 @@ def test_wado_retrieve_series(mock_cls, tmp_path):
     client.retrieve_series.return_value = [_make_dataset("1.1"), _make_dataset("1.2")]
     mock_cls.return_value = client
 
-    saved = wado_retrieve(_make_profile(), study_uid="1.2.3",
-                          series_uid="1.2.3.4", output_dir=tmp_path)
+    saved = wado_retrieve(
+        _make_profile(), study_uid="1.2.3", series_uid="1.2.3.4", output_dir=tmp_path
+    )
 
     assert len(saved) == 2
 
@@ -226,9 +233,13 @@ def test_wado_retrieve_instance(mock_cls, tmp_path):
     client.retrieve_instance.return_value = _make_dataset("1.2.3.4.5")
     mock_cls.return_value = client
 
-    saved = wado_retrieve(_make_profile(), study_uid="1.2.3",
-                          series_uid="1.2.3.4", instance_uid="1.2.3.4.5",
-                          output_dir=tmp_path)
+    saved = wado_retrieve(
+        _make_profile(),
+        study_uid="1.2.3",
+        series_uid="1.2.3.4",
+        instance_uid="1.2.3.4.5",
+        output_dir=tmp_path,
+    )
 
     assert len(saved) == 1
 
@@ -244,6 +255,7 @@ def test_wado_error_raises(mock_cls, tmp_path):
 
 
 # ── STOW-RS ───────────────────────────────────────────────────────────────────
+
 
 @patch("healthcarecli.dicom.web.DICOMwebClient")
 def test_stow_store_success(mock_cls, tmp_path):

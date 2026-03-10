@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pydicom
 from pydicom import Dataset
-from pynetdicom import AE, evt
+from pynetdicom import AE, AllStoragePresentationContexts, evt
 from pynetdicom.sop_class import Verification
 
 from healthcarecli.dicom.connections import AEProfile
