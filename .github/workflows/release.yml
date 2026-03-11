@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"   # Triggered by: git tag v0.1.0 && git push --tags
+
+permissions:
+  contents: write   # needed to create GitHub Release
+
+jobs:
+  # ── 1. Run tests on the tag commit ────────────────────────────────────────
+  test:
+    name: Test (ubuntu / Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: pytest --tb=short -q
+
+  # ── 2. Build Python dist and publish to PyPI ──────────────────────────────
+  pypi:
+    name: Publish to PyPI
+    needs: test
+    runs-on: ubuntu-latest
+    environment: release          # optional: add a "release" environment in repo settings
+    permissions:
+      id-token: write             # required for OIDC trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist + wheel
+        run: |
+          pip install build
+          python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Uses OIDC — no token needed if repo is configured as trusted publisher on PyPI
+        # Fallback: set PYPI_API_TOKEN secret and uncomment below:
+        # with:
+        #   password: ${{ secrets.PYPI_API_TOKEN }}
+
+  # ── 3. Publish npm wrapper package ────────────────────────────────────────
+  npm:
+    name: Publish to npm
+    needs: pypi                   # npm postinstall installs from PyPI, so PyPI must be live first
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+      - name: Sync npm version with git tag
+        working-directory: npm
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"   # strip leading 'v'  e.g.  v0.1.0 → 0.1.0
+          npm version "$TAG" --no-git-tag-version
+      - name: Publish
+        working-directory: npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ── 4. Create GitHub Release with changelog ───────────────────────────────
+  github-release:
+    name: GitHub Release
+    needs: [pypi, npm]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for changelog
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV=$(git tag --sort=-version:refname | sed -n '2p')
+          if [ -n "$PREV" ]; then
+            NOTES=$(git log "${PREV}..HEAD" --pretty=format:"- %s" --no-merges)
+          else
+            NOTES=$(git log --pretty=format:"- %s" --no-merges)
+          fi
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$NOTES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            ## What's changed
+
+            ${{ steps.changelog.outputs.notes }}
+
+            ## Install
+
+            ```bash
+            npm install -g healthcarecli   # Node ≥18 + Python ≥3.10
+            pipx install healthcarecli     # Python-only
+            ```
+          files: dist/*

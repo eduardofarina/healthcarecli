@@ -7,9 +7,15 @@
   "bugs": "https://github.com/eduardofarina/healthcarecli/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/eduardofarina/healthcarecli.git"
+    "url": "https://github.com/eduardofarina/healthcarecli.git",
+    "directory": "npm"
   },
   "license": "MIT",
+  "files": [
+    "bin/",
+    "scripts/",
+    "package.json"
+  ],
   "bin": {
     "healthcarecli": "./bin/healthcarecli.js"
   },

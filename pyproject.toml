@@ -6,6 +6,23 @@ build-backend = "hatchling.build"
 name = "healthcarecli"
 version = "0.1.0"
 description = "Cross-platform CLI for healthcare interoperability — DICOM, FHIR, HL7"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Eduardo Farina" }]
+keywords = ["healthcare", "dicom", "fhir", "hl7", "pacs", "cli", "agents"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
 requires-python = ">=3.10"
 dependencies = [
     "typer>=0.12",
@@ -25,6 +42,11 @@ dev = [
     "ruff>=0.4",
     "mypy>=1.10",
 ]
+
+[project.urls]
+Homepage = "https://github.com/eduardofarina/healthcarecli"
+Repository = "https://github.com/eduardofarina/healthcarecli"
+Issues = "https://github.com/eduardofarina/healthcarecli/issues"
 
 [project.scripts]
 healthcarecli = "healthcarecli.cli:app"
