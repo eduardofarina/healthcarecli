@@ -16,12 +16,14 @@ from healthcarecli.dicom.echo import DicomEchoError, cecho
 from healthcarecli.dicom.move import DicomMoveError, MoveResult, cmove
 from healthcarecli.dicom.query import DicomQueryError, QueryParams, cfind
 from healthcarecli.dicom.store import DicomStoreError, SCPServer, StoreResult, csend
+from healthcarecli.dicom.autotuner.cli import autotune_app
 from healthcarecli.dicom.web_cli import web_app
 
 app = typer.Typer(help="DICOM operations — profiles, C-FIND, C-STORE, C-MOVE, DICOMweb.")
 profile_app = typer.Typer(help="Manage DICOM AE connection profiles.")
 app.add_typer(profile_app, name="profile")
 app.add_typer(web_app, name="web")
+app.add_typer(autotune_app, name="autotune")
 
 console = Console(stderr=True)  # status/errors → stderr; data → stdout
 
