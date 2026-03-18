@@ -11,6 +11,7 @@ from rich import print_json
 from rich.console import Console
 from rich.table import Table
 
+from healthcarecli.dicom.autotuner.cli import autotune_app
 from healthcarecli.dicom.connections import AEProfile, ProfileNotFoundError
 from healthcarecli.dicom.echo import DicomEchoError, cecho
 from healthcarecli.dicom.move import DicomMoveError, MoveResult, cmove
@@ -22,6 +23,7 @@ app = typer.Typer(help="DICOM operations — profiles, C-FIND, C-STORE, C-MOVE, 
 profile_app = typer.Typer(help="Manage DICOM AE connection profiles.")
 app.add_typer(profile_app, name="profile")
 app.add_typer(web_app, name="web")
+app.add_typer(autotune_app, name="autotune")
 
 console = Console(stderr=True)  # status/errors → stderr; data → stdout
 
