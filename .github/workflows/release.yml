@@ -40,9 +40,10 @@ jobs:
           python -m build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip_existing: true   # no-op if this version is already on PyPI (idempotent re-runs)
         # Uses OIDC — no token needed if repo is configured as trusted publisher on PyPI
         # Fallback: set PYPI_API_TOKEN secret and uncomment below:
-        # with:
         #   password: ${{ secrets.PYPI_API_TOKEN }}
 
   # ── 3. Publish npm wrapper package ────────────────────────────────────────
