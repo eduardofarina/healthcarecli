@@ -34,19 +34,19 @@ class BenchmarkResult:
     limit: int
 
     # Echo
-    echo_rtt_ms: float      # -1.0 on failure
+    echo_rtt_ms: float  # -1.0 on failure
     echo_error: str
 
     # Sequential C-FIND
     cfind_results: int
     cfind_elapsed_s: float
-    cfind_tput: float       # results/sec; 0.0 on error or 0 results
+    cfind_tput: float  # results/sec; 0.0 on error or 0 results
     cfind_error: str
 
     # Parallel C-FIND (params.workers > 1 only; else mirrors sequential)
     parallel_elapsed_s: float
     parallel_tput: float
-    worker_speedup: float   # parallel_tput / cfind_tput; 1.0 when workers==1
+    worker_speedup: float  # parallel_tput / cfind_tput; 1.0 when workers==1
 
     score: float
     success: bool
@@ -61,7 +61,7 @@ class BenchmarkResult:
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> BenchmarkResult:
-        param_raw = {k[len("param_"):]: v for k, v in d.items() if k.startswith("param_")}
+        param_raw = {k[len("param_") :]: v for k, v in d.items() if k.startswith("param_")}
         rest = {k: v for k, v in d.items() if not k.startswith("param_")}
         valid = {f.name for f in fields(cls)} - {"params"}
         return cls(
@@ -88,7 +88,7 @@ def _compute_score(
     if cfind_tput <= 0.0:
         return 0.0
     echo_rtt_s = echo_rtt_ms / 1000.0
-    rtt_penalty = 1.0 + (echo_rtt_s / 0.100)          # 100 ms RTT doubles denominator
+    rtt_penalty = 1.0 + (echo_rtt_s / 0.100)  # 100 ms RTT doubles denominator
     speedup = max(1.0, worker_speedup)
     return round((cfind_tput * speedup) / rtt_penalty, 4)
 

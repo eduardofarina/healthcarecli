@@ -237,8 +237,19 @@ def history_cmd(
         return
 
     table = Table(title=f"Autotune history — {profile_name} (top {len(history)})")
-    for col in ("Timestamp", "PDU", "ACSE(s)", "DIMSE(s)", "NET(s)", "W",
-                "Echo(ms)", "Tput(/s)", "Speedup", "Score", "OK"):
+    for col in (
+        "Timestamp",
+        "PDU",
+        "ACSE(s)",
+        "DIMSE(s)",
+        "NET(s)",
+        "W",
+        "Echo(ms)",
+        "Tput(/s)",
+        "Speedup",
+        "Score",
+        "OK",
+    ):
         table.add_column(col, no_wrap=True)
 
     for r in history:
@@ -285,9 +296,7 @@ def apply_cmd(
     if from_best:
         winner = best_result(profile_name)
         if winner is None:
-            console.print(
-                f"[red]No history for '{profile_name}'. Run a sweep first.[/red]"
-            )
+            console.print(f"[red]No history for '{profile_name}'. Run a sweep first.[/red]")
             raise typer.Exit(1)
         params = winner.params
     else:
@@ -333,8 +342,10 @@ def apply_cmd(
 @autotune_app.command("show-space")
 def show_space(
     profile_name: str | None = typer.Option(
-        None, "--profile", "-p",
-        help="If given, also shows the currently applied params for this profile"
+        None,
+        "--profile",
+        "-p",
+        help="If given, also shows the currently applied params for this profile",
     ),
     output: str = typer.Option("json", "--output", "-o", help="json|table"),
 ) -> None:
