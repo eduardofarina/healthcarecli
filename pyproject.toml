@@ -33,6 +33,8 @@ dependencies = [
     "dicomweb-client>=0.60",
     "requests>=2.31",
     "fhir.resources>=7.1",
+    "PyJWT>=2.8",
+    "cryptography>=42.0",
 ]
 
 [project.optional-dependencies]

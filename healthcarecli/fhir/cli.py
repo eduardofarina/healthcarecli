@@ -27,6 +27,15 @@ from healthcarecli.fhir.client import (
     fhir_search,
     fhir_update,
 )
+from healthcarecli.fhir.token import (
+    build_jwt_assertion,
+    cache_token,
+    exchange_jwt_for_token,
+    generate_rsa_keypair,
+    load_cached_token,
+    load_private_key,
+    save_private_key,
+)
 
 app = typer.Typer(help="FHIR R4 — search, read, create, update, delete resources.")
 profile_app = typer.Typer(help="Manage FHIR server profiles.")
@@ -169,7 +178,22 @@ def search(
 
     try:
         bundle = fhir_search(profile, resource_type, params=params, count=count, offset=offset)
-    except (FHIRError, FHIRAuthError) as exc:
+    except FHIRAuthError as exc:
+        console.print(f"[red]{exc}[/red]")
+        if profile.auth_type == "smart":
+            console.print(
+                f"[yellow]Token expired or missing. "
+                f"Run: healthcarecli fhir token {profile_name}[/yellow]"
+            )
+        raise typer.Exit(1)
+    except FHIRError as exc:
+        if exc.status_code == 401 and profile.auth_type == "smart":
+            console.print(f"[red]{exc}[/red]")
+            console.print(
+                f"[yellow]Token expired or missing. "
+                f"Run: healthcarecli fhir token {profile_name}[/yellow]"
+            )
+            raise typer.Exit(1)
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1)
 
@@ -301,6 +325,98 @@ def delete(
     except (FHIRError, FHIRAuthError) as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1)
+
+
+# ── Keygen ────────────────────────────────────────────────────────────────────
+
+
+@app.command("keygen")
+def keygen(
+    profile_name: str = typer.Argument(..., help="Profile name (e.g. epic-sandbox)"),
+) -> None:
+    """Generate an RSA-2048 keypair for Backend Services JWT auth.
+
+    Saves the private key locally and prints the public JWK to stdout.
+    Paste the JWK into Epic's app registration (JSON Web Keys section).
+    """
+    private_pem, public_jwk_json = generate_rsa_keypair()
+    key_path = save_private_key(profile_name, private_pem)
+
+    # Update or create the profile with the key path recorded
+    try:
+        profile = FHIRProfile.load(profile_name)
+        profile.private_key_path = str(key_path)
+        profile.save()
+    except FHIRProfileNotFoundError:
+        pass  # Profile doesn't exist yet; user should run profile add first
+
+    console.print(f"[green]Private key saved to:[/green] {key_path}")
+    console.print()
+    console.print("[bold]Public JWK (paste into your Epic app registration):[/bold]")
+    console.print()
+    # Print JWK to stdout so agents can capture it
+    sys.stdout.write(public_jwk_json + "\n")
+    console.print()
+    console.print(
+        "[yellow]Go to https://fhir.epic.com/developer → your app → Edit → "
+        "JSON Web Keys → paste the above[/yellow]"
+    )
+
+
+# ── Token ─────────────────────────────────────────────────────────────────────
+
+
+@app.command("token")
+def token_cmd(
+    profile_name: str = typer.Argument(..., help="Profile name (e.g. epic-sandbox)"),
+    scope: str = typer.Option("system/*.read", "--scope", "-s", help="OAuth2 scope"),
+    force: bool = typer.Option(False, "--force", "-f", help="Ignore cache, fetch new token"),
+) -> None:
+    """Fetch (or return cached) a Backend Services JWT access token.
+
+    Prints the access_token to stdout so agents can capture it:
+      TOKEN=$(healthcarecli fhir token epic-sandbox)
+    """
+    profile = _load_profile(profile_name)
+
+    if profile.auth_type != "smart":
+        console.print(
+            f"[red]Profile '{profile_name}' auth type is '{profile.auth_type}', "
+            f"not 'smart'. Set --auth smart when adding the profile.[/red]"
+        )
+        raise typer.Exit(1)
+
+    if not profile.token_url or not profile.client_id:
+        console.print(
+            "[red]Profile is missing token_url or client_id. "
+            "Re-add the profile with --token-url and --client-id.[/red]"
+        )
+        raise typer.Exit(1)
+
+    # Check cache unless forced
+    if not force:
+        cached = load_cached_token(profile_name)
+        if cached:
+            sys.stdout.write(cached["access_token"] + "\n")
+            return
+
+    # Load private key
+    try:
+        private_key_pem = load_private_key(profile_name)
+    except FileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+
+    # Build assertion and exchange
+    try:
+        assertion = build_jwt_assertion(profile.client_id, profile.token_url, private_key_pem)
+        token_response = exchange_jwt_for_token(profile.token_url, assertion, scope=scope)
+    except Exception as exc:  # noqa: BLE001
+        console.print(f"[red]Token exchange failed: {exc}[/red]")
+        raise typer.Exit(1)
+
+    cache_token(profile_name, token_response)
+    sys.stdout.write(token_response["access_token"] + "\n")
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
