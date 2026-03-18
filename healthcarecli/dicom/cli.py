@@ -11,12 +11,12 @@ from rich import print_json
 from rich.console import Console
 from rich.table import Table
 
+from healthcarecli.dicom.autotuner.cli import autotune_app
 from healthcarecli.dicom.connections import AEProfile, ProfileNotFoundError
 from healthcarecli.dicom.echo import DicomEchoError, cecho
 from healthcarecli.dicom.move import DicomMoveError, MoveResult, cmove
 from healthcarecli.dicom.query import DicomQueryError, QueryParams, cfind
 from healthcarecli.dicom.store import DicomStoreError, SCPServer, StoreResult, csend
-from healthcarecli.dicom.autotuner.cli import autotune_app
 from healthcarecli.dicom.web_cli import web_app
 
 app = typer.Typer(help="DICOM operations — profiles, C-FIND, C-STORE, C-MOVE, DICOMweb.")
