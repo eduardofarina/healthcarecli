@@ -2,6 +2,7 @@
 
 import typer
 
+from healthcarecli.dataset import cli as dataset_cli
 from healthcarecli.dicom import cli as dicom_cli
 from healthcarecli.fhir import cli as fhir_cli
 
@@ -11,6 +12,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+app.add_typer(dataset_cli.app, name="dataset")
 app.add_typer(dicom_cli.app, name="dicom")
 app.add_typer(fhir_cli.app, name="fhir")
 

@@ -11,7 +11,19 @@ from rich import print_json
 from rich.console import Console
 from rich.table import Table
 
+from healthcarecli.dicom.anonymize import (
+    PROFILES as ANON_PROFILES,
+)
+from healthcarecli.dicom.anonymize import (
+    AnonymizeResult,
+    anonymize_files,
+)
 from healthcarecli.dicom.autotuner.cli import autotune_app
+from healthcarecli.dicom.bulk import (
+    batch_query,
+    parallel_send,
+    parse_batch_file,
+)
 from healthcarecli.dicom.connections import AEProfile, ProfileNotFoundError
 from healthcarecli.dicom.echo import DicomEchoError, cecho
 from healthcarecli.dicom.move import DicomMoveError, MoveResult, cmove
@@ -336,4 +348,191 @@ def move(
         )
 
     if not result.success:
+        raise typer.Exit(1)
+
+
+# ── Anonymize ────────────────────────────────────────────────────────────────
+
+
+@app.command("anonymize")
+def anonymize(
+    paths: Annotated[list[Path], typer.Argument(help="DICOM files or directories")] = ...,
+    output_dir: Path = typer.Option(
+        Path("anonymized"), "--output-dir", "-d", help="Output directory"
+    ),
+    profile: str = typer.Option(
+        "safe-harbor",
+        "--profile",
+        help=f"Anonymization profile: {', '.join(ANON_PROFILES.keys())}",
+    ),
+    keep_tags: list[str] = typer.Option(
+        [],
+        "--keep",
+        "-k",
+        help="Additional DICOM tags to preserve (repeatable, e.g. --keep SeriesDescription)",
+    ),
+    salt: str = typer.Option(
+        "",
+        "--salt",
+        help="Salt for deterministic UID remapping (empty = random per run)",
+    ),
+    output: str = typer.Option("text", "--output", "-o", help="Output format: text|json"),
+) -> None:
+    """De-identify DICOM files — remove PHI tags per profile."""
+    keep_set = set(keep_tags) if keep_tags else None
+
+    results: list[dict] = []
+
+    def progress(r: AnonymizeResult) -> None:
+        icon = "[green]OK[/green]" if r.success else "[red]FAIL[/red]"
+        console.print(
+            f"  {icon} {r.input_path.name} — {r.tags_removed} removed, {r.tags_emptied} emptied"
+            if r.success
+            else f"  {icon} {r.input_path.name} — {r.message}"
+        )
+        results.append(
+            {
+                "input": str(r.input_path),
+                "output": str(r.output_path) if r.output_path else None,
+                "success": r.success,
+                "message": r.message,
+                "tags_removed": r.tags_removed,
+                "tags_emptied": r.tags_emptied,
+            }
+        )
+
+    console.print(f"[bold]Anonymizing with profile: {profile}[/bold]")
+    anonymize_files(
+        paths, output_dir, profile=profile, keep_tags=keep_set, salt=salt, on_progress=progress
+    )
+
+    ok = sum(1 for r in results if r["success"])
+    console.print(f"\n[bold]{ok}/{len(results)} files anonymized → {output_dir}[/bold]")
+
+    if output == "json":
+        print_json(json.dumps(results))
+
+    if ok < len(results):
+        raise typer.Exit(1)
+
+
+# ── Batch Query ──────────────────────────────────────────────────────────────
+
+
+@app.command("batch-query")
+def batch_query_cmd(
+    profile_name: str = typer.Option(..., "--profile", "-p", help="AE profile name"),
+    input_file: Path = typer.Option(..., "--input", "-i", help="CSV/TSV with query parameters"),
+    model: str = typer.Option("STUDY", "--model", help="Query model: STUDY|PATIENT"),
+    limit: int | None = typer.Option(None, "--limit", help="Max results per query"),
+    output: str = typer.Option("table", "--output", "-o", help="Output format: table|json|ndjson"),
+) -> None:
+    """Run multiple C-FIND queries from a CSV/TSV file."""
+    try:
+        ae = AEProfile.load(profile_name)
+    except ProfileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+
+    if not input_file.exists():
+        console.print(f"[red]File not found: {input_file}[/red]")
+        raise typer.Exit(1)
+
+    rows = parse_batch_file(input_file)
+    console.print(f"[bold]Running {len(rows)} queries from {input_file}...[/bold]")
+
+    def progress(current: int, total: int, results_so_far: int) -> None:
+        console.print(f"  Query {current}/{total} — {results_so_far} results so far")
+
+    result = batch_query(
+        ae,
+        rows,
+        model=model,
+        limit_per_query=limit,
+        on_progress=progress if output != "json" else None,
+    )
+
+    console.print(
+        f"\n[bold]{result.successful}/{result.total_queries} queries succeeded "
+        f"— {result.total_results} total results[/bold]"
+    )
+
+    if result.errors:
+        for err in result.errors:
+            console.print(f"  [red]Line {err['line']}: {err['error']}[/red]")
+
+    if output == "json":
+        print_json(
+            json.dumps(
+                {
+                    "total_queries": result.total_queries,
+                    "successful": result.successful,
+                    "failed": result.failed,
+                    "total_results": result.total_results,
+                    "results": result.results,
+                    "errors": result.errors,
+                }
+            )
+        )
+    elif output == "ndjson":
+        import sys
+
+        for r in result.results:
+            sys.stdout.write(json.dumps(r) + "\n")
+    elif result.results:
+        table = Table(title=f"Batch results ({result.total_results})")
+        keys = [k for k in result.results[0].keys() if not k.startswith("_")]
+        for k in keys:
+            table.add_column(k, overflow="fold")
+        for row in result.results:
+            table.add_row(*[str(row.get(k, "")) for k in keys])
+        console.print(table)
+
+    if result.failed:
+        raise typer.Exit(1)
+
+
+# ── Parallel Send ────────────────────────────────────────────────────────────
+
+
+@app.command("parallel-send")
+def parallel_send_cmd(
+    profile_name: str = typer.Option(..., "--profile", "-p", help="AE profile name"),
+    paths: Annotated[list[Path], typer.Argument(help="DICOM files or directories")] = ...,
+    workers: int = typer.Option(4, "--workers", "-w", help="Number of parallel associations"),
+    output: str = typer.Option("table", "--output", "-o", help="Output format: table|json"),
+) -> None:
+    """Send DICOM files using multiple parallel associations for faster transfer."""
+    try:
+        ae = AEProfile.load(profile_name)
+    except ProfileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1)
+
+    def progress(r: StoreResult) -> None:
+        icon = "[green]OK[/green]" if r.success else "[red]FAIL[/red]"
+        console.print(f"  {icon} {r.path.name} - {r.message}")
+
+    console.print(f"[bold]Sending with {workers} parallel workers...[/bold]")
+
+    result = parallel_send(ae, paths, workers=workers, on_progress=progress)
+
+    console.print(
+        f"\n[bold]{result.successful}/{result.total_files} files sent successfully.[/bold]"
+    )
+
+    if output == "json":
+        print_json(
+            json.dumps(
+                {
+                    "total_files": result.total_files,
+                    "successful": result.successful,
+                    "failed": result.failed,
+                    "workers": workers,
+                    "results": result.results,
+                }
+            )
+        )
+
+    if result.failed:
         raise typer.Exit(1)
