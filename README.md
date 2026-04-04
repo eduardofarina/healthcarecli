@@ -63,12 +63,17 @@ healthcarecli dicom send --profile orthanc /path/to/study.dcm
 healthcarecli dicom --help
 
 Commands:
-  profile  Manage PACS connection profiles (add, list, show, delete)
-  ping     Verify a PACS connection with C-ECHO
-  query    C-FIND — search for patients, studies, series, or instances
-  send     C-STORE SCU — send DICOM files to a PACS
-  listen   C-STORE SCP — receive incoming DICOM files
-  move     C-MOVE SCU — retrieve studies/series to a destination AE
+  profile        Manage PACS connection profiles (add, list, show, delete)
+  ping           Verify a PACS connection with C-ECHO
+  query          C-FIND — search for patients, studies, series, or instances
+  send           C-STORE SCU — send DICOM files to a PACS
+  listen         C-STORE SCP — receive incoming DICOM files
+  move           C-MOVE SCU — retrieve studies/series to a destination AE
+  anonymize      De-identify DICOM files — remove PHI tags
+  batch-query    Run multiple C-FIND queries from a CSV/TSV file
+  parallel-send  Send DICOM files using multiple parallel associations
+  autotune       Benchmark and optimize pynetdicom parameters for a PACS
+  web            DICOMweb operations (QIDO-RS, WADO-RS, STOW-RS)
 ```
 
 ### Profiles
@@ -199,6 +204,51 @@ healthcarecli fhir update Patient/123 --profile hapi --file updated.json
 healthcarecli fhir delete Patient/123 --profile hapi --yes
 ```
 
+### Anonymize (de-identify)
+
+```bash
+# Anonymize a single file
+healthcarecli dicom anonymize input.dcm --output-dir ./anon/
+
+# Anonymize a directory of DICOM files
+healthcarecli dicom anonymize /path/to/study/ --output-dir ./anon/
+
+# Use a specific de-identification profile
+healthcarecli dicom anonymize /path/to/study/ --output-dir ./anon/ --profile safe-harbor
+
+# Keep specific tags (e.g. InstitutionName)
+healthcarecli dicom anonymize /path/to/study/ --output-dir ./anon/ --keep-tag InstitutionName
+
+# Preserve dates (useful for longitudinal studies)
+healthcarecli dicom anonymize /path/to/study/ --output-dir ./anon/ --keep-dates
+```
+
+### Bulk operations
+
+```bash
+# Batch query — run multiple C-FIND queries from a CSV file
+healthcarecli dicom batch-query --profile orthanc queries.csv --output json
+
+# Parallel send — faster uploads using multiple associations
+healthcarecli dicom parallel-send --profile orthanc /path/to/study/ --workers 4
+```
+
+### Autotune (benchmark & optimize)
+
+```bash
+# Sweep N parameter combinations to find the best settings
+healthcarecli dicom autotune sweep --profile orthanc --iterations 20
+
+# View benchmark history
+healthcarecli dicom autotune history --profile orthanc
+
+# Apply the best parameters to your profile
+healthcarecli dicom autotune apply --profile orthanc
+
+# Show tunable parameter ranges
+healthcarecli dicom autotune show-space
+```
+
 ---
 
 ## DICOMweb commands (QIDO-RS / WADO-RS / STOW-RS)
@@ -306,6 +356,27 @@ Then prompt your agent: _"Use the healthcarecli tool to query the orthanc PACS f
 
 ---
 
+## Dataset commands (ML export)
+
+```bash
+# Export DICOM files to a flat directory with CSV manifest
+healthcarecli dataset export /path/to/dicoms/ --output-dir ./dataset/ --structure flat
+
+# Organize by patient/study
+healthcarecli dataset export /path/to/dicoms/ --output-dir ./dataset/ --structure patient-study
+
+# Organize by modality/patient
+healthcarecli dataset export /path/to/dicoms/ --output-dir ./dataset/ --structure modality-patient
+
+# Use symlinks instead of copying (saves disk space)
+healthcarecli dataset export /path/to/dicoms/ --output-dir ./dataset/ --symlink
+
+# Show summary statistics for a dataset
+healthcarecli dataset stats /path/to/dicoms/
+```
+
+---
+
 ## Shell completion
 
 ```bash
@@ -317,8 +388,10 @@ healthcarecli --install-completion   # bash, zsh, fish, PowerShell
 ## Roadmap
 
 - [x] DICOM — C-FIND, C-STORE SCU/SCP, C-ECHO, C-MOVE, AE profiles
+- [x] DICOM — Anonymize, bulk operations, autotune
 - [x] DICOMweb — QIDO-RS, WADO-RS, STOW-RS (REST, auth: none/basic/bearer)
 - [x] FHIR R4 — search, CRUD, capabilities, SMART on FHIR auth
+- [x] Dataset — ML-ready export with metadata manifest
 - [x] npm distribution (`npm install -g healthcarecli`)
 - [x] CI — GitHub Actions (Ubuntu, Windows, macOS × Python 3.10–3.12)
 - [ ] HL7 v2 — MLLP send/receive, ADT/ORM/ORU message builders
