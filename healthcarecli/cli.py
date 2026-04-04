@@ -12,18 +12,23 @@ from healthcarecli.fhir import cli as fhir_cli
 
 VERSION = "0.1.0"
 
-BANNER = r"""
- ╦ ╦╔═╗╔═╗╦  ╔╦╗╦ ╦╔═╗╔═╗╦═╗╔═╗  ╔═╗╦  ╦
- ╠═╣║╣ ╠═╣║   ║ ╠═╣║  ╠═╣╠╦╝║╣   ║  ║  ║
- ╩ ╩╚═╝╩ ╩╩═╝╩ ╩ ╩╚═╝╩ ╩╩╚═╚═╝  ╚═╝╩═╝╩
-"""
+BANNER_LINES = [
+    "  _   _            _ _   _                            ___ _     ___ ",
+    " | | | | ___  __ _| | |_| |__   ___ __ _ _ __ ___   / __| |   |_ _|",
+    " | |_| |/ _ \\/ _` | | __| '_ \\ / __/ _` | '__/ _ \\ | |  | |    | | ",
+    " |  _  |  __| (_| | | |_| | | | (_| (_| | | |  __/ | |__| |___ | | ",
+    " |_| |_|\\___|\\__,_|_|\\__|_| |_|\\___\\__,_|_|  \\___|  \\___|_____|___|",
+]
 
 
 def _print_banner() -> None:
     console = Console()
-    banner_text = Text(BANNER, style="bold cyan")
-    console.print(banner_text, highlight=False)
-    console.print(f"  v{VERSION}\n", style="green")
+    console.print()
+    for line in BANNER_LINES:
+        console.print(line, style="bold blue", highlight=False)
+    console.print()
+    console.print(f"  v{VERSION}", style="bright_green")
+    console.print("  DICOM  |  FHIR  |  HL7\n", style="dim")
 
 
 app = typer.Typer(
