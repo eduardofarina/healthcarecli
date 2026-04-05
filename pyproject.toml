@@ -37,6 +37,8 @@ dependencies = [
     "textual>=0.70",
     "textual-image>=0.3",
     "numpy>=1.24",
+    "PyJWT>=2.8",
+    "cryptography>=41.0",
 ]
 
 [project.optional-dependencies]

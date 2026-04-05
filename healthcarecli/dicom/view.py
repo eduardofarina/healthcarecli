@@ -15,6 +15,7 @@ from textual.widgets import Label
 
 try:
     from textual_image.widget import Image as TxImage
+
     HAS_TEXTUAL_IMAGE = True
 except ImportError:
     HAS_TEXTUAL_IMAGE = False
@@ -194,6 +195,7 @@ class DicomViewer(App):
             rgb = np.array(img)
             rendered = _render_half_blocks(rgb)
             from rich.text import Text
+
             self.query_one("#image-container", Static).update(Text.from_ansi(rendered))
 
         self.query_one("#statusbar", Label).update(self._status())
