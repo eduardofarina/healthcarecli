@@ -37,7 +37,9 @@ def _get_default_window(pixels: np.ndarray, ds: pydicom.Dataset) -> tuple[float,
     center = getattr(ds, "WindowCenter", None)
     width = getattr(ds, "WindowWidth", None)
     if center is not None:
-        center = float(center[0]) if isinstance(center, pydicom.multival.MultiValue) else float(center)
+        center = (
+            float(center[0]) if isinstance(center, pydicom.multival.MultiValue) else float(center)
+        )
     if width is not None:
         width = float(width[0]) if isinstance(width, pydicom.multival.MultiValue) else float(width)
     if center is not None and width is not None:
@@ -67,7 +69,6 @@ def _frame_to_pil(frame: np.ndarray, is_rgb: bool, wc: float, ww: float) -> Imag
 
 
 def _render_half_blocks(rgb: np.ndarray) -> str:
-    from rich.text import Text
     h, w = rgb.shape[:2]
     if h % 2 != 0:
         rgb = np.vstack([rgb, np.zeros((1, w, 3), dtype=np.uint8)])

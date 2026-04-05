@@ -1,10 +1,9 @@
 """Root CLI entry point."""
 
-from typing import Optional
+from __future__ import annotations
 
 import typer
 from rich.console import Console
-from rich.text import Text
 
 from healthcarecli.dataset import cli as dataset_cli
 from healthcarecli.dicom import cli as dicom_cli
@@ -40,7 +39,7 @@ app = typer.Typer(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None, "--version", "-v", help="Show version and exit.", is_eager=True
     ),
 ) -> None:
