@@ -55,6 +55,8 @@ class FHIRProfile:
     token_url: str = ""
     client_id: str = ""
     client_secret: str = ""
+    # Backend Services JWT flow: path to RSA private key PEM
+    private_key_path: str = ""
 
     # ── persistence ───────────────────────────────────────────────────────
 
@@ -107,6 +109,10 @@ class FHIRProfile:
         if self.token:
             return self.token
         if self.auth_type == "smart" and self.token_url and self.client_id:
+            # Backend Services JWT flow (private key present)
+            if self.private_key_path:
+                return _fetch_jwt_token(self.name, self.token_url, self.client_id)
+            # Legacy client-secret flow
             return _fetch_client_credentials_token(
                 self.token_url, self.client_id, self.client_secret
             )
@@ -145,6 +151,27 @@ def _fetch_client_credentials_token(token_url: str, client_id: str, client_secre
     )
     _raise_for_fhir(resp)
     return resp.json()["access_token"]
+
+
+def _fetch_jwt_token(profile_name: str, token_url: str, client_id: str) -> str:
+    """Fetch (or return cached) a Backend Services JWT access token."""
+    from healthcarecli.fhir.token import (
+        build_jwt_assertion,
+        cache_token,
+        exchange_jwt_for_token,
+        load_cached_token,
+        load_private_key,
+    )
+
+    cached = load_cached_token(profile_name)
+    if cached:
+        return cached["access_token"]
+
+    private_key_pem = load_private_key(profile_name)
+    assertion = build_jwt_assertion(client_id, token_url, private_key_pem)
+    token_response = exchange_jwt_for_token(token_url, assertion)
+    cache_token(profile_name, token_response)
+    return token_response["access_token"]
 
 
 # ── FHIR CRUD + search ────────────────────────────────────────────────────────
