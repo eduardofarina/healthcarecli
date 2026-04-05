@@ -34,6 +34,9 @@ dependencies = [
     "requests>=2.31",
     "fhir.resources>=7.1",
     "Pillow>=10.0",
+    "textual>=0.70",
+    "textual-image>=0.3",
+    "numpy>=1.24",
 ]
 
 [project.optional-dependencies]
