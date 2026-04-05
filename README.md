@@ -73,6 +73,7 @@ Commands:
   batch-query    Run multiple C-FIND queries from a CSV/TSV file
   parallel-send  Send DICOM files using multiple parallel associations
   autotune       Benchmark and optimize pynetdicom parameters for a PACS
+  view           Render DICOM images in the terminal
   web            DICOMweb operations (QIDO-RS, WADO-RS, STOW-RS)
 ```
 
@@ -248,6 +249,25 @@ healthcarecli dicom autotune apply --profile orthanc
 # Show tunable parameter ranges
 healthcarecli dicom autotune show-space
 ```
+
+### View (terminal image renderer)
+
+```bash
+# Render a single DICOM image in the terminal
+healthcarecli dicom view image.dcm
+
+# Render all .dcm files in a directory
+healthcarecli dicom view sample_data/dicom/
+
+# Custom window/level (e.g. lung window for CT)
+healthcarecli dicom view ct.dcm --wc -600 --ww 1500
+
+# Control output width
+healthcarecli dicom view image.dcm --width 60
+```
+
+Supports grayscale (CT, MR, CR) and RGB (US) images. Uses Unicode half-block
+characters with 24-bit color for high-resolution terminal rendering.
 
 ---
 

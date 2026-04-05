@@ -31,7 +31,16 @@ All patient data is **fictional** — no real PHI.
 ### Quick debug commands
 
 ```bash
-# Inspect a DICOM file
+# View a DICOM image in the terminal
+healthcarecli dicom view sample_data/dicom/ct_slice_001.dcm
+
+# View all sample images at once
+healthcarecli dicom view sample_data/dicom/ --width 60
+
+# View with custom window/level (lung window for CT)
+healthcarecli dicom view sample_data/dicom/ct_slice_001.dcm --wc -600 --ww 1500
+
+# Inspect a DICOM file (metadata)
 python -c "import pydicom; ds = pydicom.dcmread('sample_data/dicom/ct_slice_001.dcm'); print(ds)"
 
 # Send all sample files to a PACS
