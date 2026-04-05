@@ -1,0 +1,113 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "pat-001",
+        "identifier": [
+          {
+            "system": "http://hospital.example.org/mrn",
+            "value": "PAT001"
+          }
+        ],
+        "name": [
+          {
+            "use": "official",
+            "family": "Silva",
+            "given": ["Maria"]
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1985-01-01",
+        "address": [
+          {
+            "use": "home",
+            "city": "São Paulo",
+            "state": "SP",
+            "country": "BR"
+          }
+        ],
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "+55-11-99999-0001",
+            "use": "mobile"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "pat-002",
+        "identifier": [
+          {
+            "system": "http://hospital.example.org/mrn",
+            "value": "PAT002"
+          }
+        ],
+        "name": [
+          {
+            "use": "official",
+            "family": "Santos",
+            "given": ["Pedro"]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1978-06-15",
+        "address": [
+          {
+            "use": "home",
+            "city": "Rio de Janeiro",
+            "state": "RJ",
+            "country": "BR"
+          }
+        ]
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "pat-003",
+        "identifier": [
+          {
+            "system": "http://hospital.example.org/mrn",
+            "value": "PAT003"
+          }
+        ],
+        "name": [
+          {
+            "use": "official",
+            "family": "Oliveira",
+            "given": ["Ana", "Carolina"]
+          }
+        ],
+        "gender": "female",
+        "birthDate": "1992-11-20"
+      }
+    },
+    {
+      "resource": {
+        "resourceType": "Patient",
+        "id": "pat-004",
+        "identifier": [
+          {
+            "system": "http://hospital.example.org/mrn",
+            "value": "PAT004"
+          }
+        ],
+        "name": [
+          {
+            "use": "official",
+            "family": "Costa",
+            "given": ["Lucas"]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "2001-03-08"
+      }
+    }
+  ]
+}

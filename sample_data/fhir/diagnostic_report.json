@@ -1,0 +1,48 @@
+{
+  "resourceType": "DiagnosticReport",
+  "id": "dr-001",
+  "status": "final",
+  "category": [
+    {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/v2-0074",
+          "code": "RAD",
+          "display": "Radiology"
+        }
+      ]
+    }
+  ],
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "36643-5",
+        "display": "Chest X-ray"
+      }
+    ],
+    "text": "Chest X-Ray PA"
+  },
+  "subject": {
+    "reference": "Patient/pat-003"
+  },
+  "effectiveDateTime": "2024-03-15T11:00:00Z",
+  "issued": "2024-03-15T15:30:00Z",
+  "performer": [
+    {
+      "display": "Dr. Jane Smith — Radiology"
+    }
+  ],
+  "conclusion": "No acute cardiopulmonary abnormality. Heart size is normal. Lungs are clear bilaterally. No pleural effusion or pneumothorax.",
+  "conclusionCode": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "373572006",
+          "display": "Clinical finding absent"
+        }
+      ]
+    }
+  ]
+}

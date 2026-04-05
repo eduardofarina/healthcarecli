@@ -536,3 +536,48 @@ def parallel_send_cmd(
 
     if result.failed:
         raise typer.Exit(1)
+
+
+# ── View (terminal image renderer) ─────────────────────────────────────────
+
+
+@app.command("view")
+def view(
+    paths: Annotated[list[Path], typer.Argument(help="DICOM files or directories")] = ...,
+    window_center: float | None = typer.Option(None, "--wc", "--window-center", help="Window center"),
+    window_width: float | None = typer.Option(None, "--ww", "--window-width", help="Window width"),
+    width: int | None = typer.Option(None, "--width", "-W", help="Output width in characters"),
+) -> None:
+    """Render DICOM images in the terminal."""
+    import pydicom as _pydicom
+    from healthcarecli.dicom.view import print_dicom_info, render_dicom
+
+    collected: list[Path] = []
+    for p in paths:
+        if p.is_dir():
+            collected.extend(sorted(p.glob("**/*.dcm")))
+        elif p.exists():
+            collected.append(p)
+        else:
+            console.print(f"[red]Not found: {p}[/red]")
+
+    if not collected:
+        console.print("[red]No DICOM files found.[/red]")
+        raise typer.Exit(1)
+
+    out = Console()
+    for i, fpath in enumerate(collected):
+        try:
+            rendered = render_dicom(
+                fpath,
+                width=width,
+                window_center=window_center,
+                window_width=window_width,
+            )
+            out.print(rendered, highlight=False)
+            ds = _pydicom.dcmread(str(fpath), stop_before_pixels=True)
+            print_dicom_info(ds, fpath, out)
+            if i < len(collected) - 1:
+                out.print()
+        except Exception as exc:
+            console.print(f"[red]{fpath.name}: {exc}[/red]")
