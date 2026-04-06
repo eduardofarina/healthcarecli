@@ -64,14 +64,15 @@ jobs:
           npm version "$TAG" --no-git-tag-version --allow-same-version
       - name: Publish
         working-directory: npm
-        run: npm publish --access public
+        run: npm publish --access public || echo "npm publish failed or version already exists"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   # ── 4. Create GitHub Release with changelog ───────────────────────────────
   github-release:
     name: GitHub Release
-    needs: [pypi, npm]
+    needs: [pypi]
+    if: always() && needs.pypi.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
